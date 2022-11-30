@@ -74,6 +74,20 @@ async function run() {
             res.send(users);
         });
 
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
+        });
+        
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.accountType === 'seller' });
+        });
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             console.log(user);
@@ -97,20 +111,19 @@ async function run() {
         });
 
         //Products by Category section
-        app.get('/products/category/:id', async (req, res) => {
+        app.get('/categoryProducts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { 
                 product_categoryId: id };
-            const products = await productsCollection.find(query).toArray();
-            console.log(products)
-            res.send(products);
+            const categoryProducts = await productsCollection.find(query).toArray();
+            res.send(categoryProducts);
         });
 
         //  Products by Advertised section
-        app.get('/products/advertised', async (req, res) => {
+        app.get('/advertisedProducts', async (req, res) => {
             const query = { advertise: true };
-            const products = await productsCollection.find(query).toArray();
-            res.send(products);
+            const advertisedProducts = await productsCollection.find(query).toArray();
+            res.send(advertisedProducts);
         });
 
     }
