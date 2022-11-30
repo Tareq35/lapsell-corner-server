@@ -149,8 +149,9 @@ async function run() {
         })
 
         //booking product section
-        app.get('/bookingProducts', async (req, res) => {
-            const query = {};
+        app.get('/bookingProducts/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
             const bookingProducts = await bookingProductsCollection.find(query).toArray();
             res.send(bookingProducts);
         });
@@ -161,12 +162,12 @@ async function run() {
             const result = await bookingProductsCollection.insertOne(bookingProduct);
             res.send(result);
         });
-        app.delete('/bookingProducts/:id', verifyJWT, verifyAdmin, async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: ObjectId(id) };
-            const result = await bookingProductsCollection.deleteOne(filter);
-            res.send(result)
-        })
+        // app.delete('/bookingProducts/:id', verifyJWT, verifyAdmin, async (req, res) => {
+        //     const id = req.params.id;
+        //     const filter = { _id: ObjectId(id) };
+        //     const result = await bookingProductsCollection.deleteOne(filter);
+        //     res.send(result)
+        // })
 
 
     }
