@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -39,6 +39,10 @@ function verifyJWT(req, res, next) {
 async function run() {
     try {
         const usersCollection = client.db('lapsellCorner').collection('users');
+        const categoriesCollection = client.db('lapsellCorner').collection('categories');
+        const productsCollection = client.db('lapsellCorner').collection('products');
+        const bookingsCollection = client.db('lapsellCorner').collection('bookings');
+        const paymentsCollection = client.db('lapsellCorner').collection('payments');
 
         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
@@ -83,7 +87,31 @@ async function run() {
             const updateDoc = { $set: user };
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.json(result);
-        })
+        });
+
+        // Categories section
+        app.get('/categories', async (req, res) => {
+            const query = {};
+            const categories = await categoriesCollection.find(query).toArray();
+            res.send(categories);
+        });
+
+        //Products by Category section
+        app.get('/products/category/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { 
+                product_categoryId: id };
+            const products = await productsCollection.find(query).toArray();
+            console.log(products)
+            res.send(products);
+        });
+
+        //  Products by Advertised section
+        app.get('/products/advertised', async (req, res) => {
+            const query = { advertise: true };
+            const products = await productsCollection.find(query).toArray();
+            res.send(products);
+        });
 
     }
     finally {
