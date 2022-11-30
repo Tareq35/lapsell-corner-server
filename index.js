@@ -41,7 +41,7 @@ async function run() {
         const usersCollection = client.db('lapsellCorner').collection('users');
         const categoriesCollection = client.db('lapsellCorner').collection('categories');
         const productsCollection = client.db('lapsellCorner').collection('products');
-        const bookingsCollection = client.db('lapsellCorner').collection('bookings');
+        const bookingProductsCollection = client.db('lapsellCorner').collection('bookingProducts');
         const paymentsCollection = client.db('lapsellCorner').collection('payments');
         const reportedProductsCollection = client.db('lapsellCorner').collection('reportedProducts');
 
@@ -145,6 +145,26 @@ async function run() {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await reportedProductsCollection.deleteOne(filter);
+            res.send(result)
+        })
+
+        //booking product section
+        app.get('/bookingProducts', async (req, res) => {
+            const query = {};
+            const bookingProducts = await bookingProductsCollection.find(query).toArray();
+            res.send(bookingProducts);
+        });
+
+        app.post('/bookingProducts', async (req, res) => {
+            const bookingProduct = req.body;
+            console.log(bookingProduct);
+            const result = await bookingProductsCollection.insertOne(bookingProduct);
+            res.send(result);
+        });
+        app.delete('/bookingProducts/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await bookingProductsCollection.deleteOne(filter);
             res.send(result)
         })
 
