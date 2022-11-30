@@ -43,6 +43,7 @@ async function run() {
         const productsCollection = client.db('lapsellCorner').collection('products');
         const bookingsCollection = client.db('lapsellCorner').collection('bookings');
         const paymentsCollection = client.db('lapsellCorner').collection('payments');
+        const reportedProductsCollection = client.db('lapsellCorner').collection('reportedProducts');
 
         const verifyAdmin = async (req, res, next) => {
             const decodedEmail = req.decoded.email;
@@ -126,6 +127,27 @@ async function run() {
             const advertisedProducts = await productsCollection.find(query).toArray();
             res.send(advertisedProducts);
         });
+
+        //Reported Products section
+        app.get('/reportedProducts', async (req, res) => {
+            const query = {};
+            const reportedProducts = await reportedProductsCollection.find(query).toArray();
+            res.send(reportedProducts);
+        });
+
+        app.post('/reportedProducts', async (req, res) => {
+            const reportedProduct = req.body;
+            console.log(reportedProduct);
+            const result = await reportedProductsCollection.insertOne(reportedProduct);
+            res.send(result);
+        });
+        app.delete('/reportedProducts/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await reportedProductsCollection.deleteOne(filter);
+            res.send(result)
+        })
+
 
     }
     finally {
