@@ -81,7 +81,7 @@ async function run() {
             const user = await usersCollection.findOne(query);
             res.send({ isAdmin: user?.role === 'admin' });
         });
-        
+
         app.get('/users/seller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
@@ -112,18 +112,44 @@ async function run() {
             res.send(categories);
         });
 
-        //Products by Category section
+        //Products by Email, Category, Advertised section
+        app.get('/products/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { sellerEmail: email }
+
+            const products = await productsCollection.find(query).toArray();
+            res.send(products);
+        });
+
+        app.post('/products', async (req, res) => {
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
+        });
+
+        app.put('/products', async (req, res) => {
+            const data = req.body;
+            const filter = { _id: ObjectId(data.id)  };
+            // const options = { upsert: true };
+            const updateDoc = { $set: {advertise: !data.advertiseStatus} };
+            const result = await productsCollection.updateOne(filter, updateDoc)
+            res.json(result);
+        });
+
         app.get('/categoryProducts/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { 
-                product_categoryId: id };
+            const query = {
+                product_categoryId: id,
+                advertise: true, sales_status: 'available'
+            };
             const categoryProducts = await productsCollection.find(query).toArray();
             res.send(categoryProducts);
         });
 
         //  Products by Advertised section
         app.get('/advertisedProducts', async (req, res) => {
-            const query = { advertise: true };
+            const query = { advertise: true, sales_status: 'available' };
+
             const advertisedProducts = await productsCollection.find(query).toArray();
             res.send(advertisedProducts);
         });
@@ -156,6 +182,13 @@ async function run() {
             res.send(bookingProducts);
         });
 
+        app.get('/bookingProducts/pay/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const bookingProduct = await bookingProductsCollection.findOne(query);
+            res.send(bookingProduct);
+        });
+
         app.post('/bookingProducts', async (req, res) => {
             const bookingProduct = req.body;
             console.log(bookingProduct);
@@ -169,6 +202,46 @@ async function run() {
         //     res.send(result)
         // })
 
+        // payment section
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ],
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id1 = payment.bookingId
+            const id2 = payment.productId
+            const filter1 = { _id: ObjectId(id1) }
+            const filter2 = { _id: ObjectId(id2) }
+            const updatedDoc1 = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedDoc2 = {
+                $set: {
+                    sales_status: 'sold'
+                }
+            }
+            const updatedResult1 = await bookingProductsCollection.updateOne(filter1, updatedDoc1)
+            const updatedResult2 = await productsCollection.updateOne(filter2, updatedDoc2)
+            res.send(result);
+        })
 
     }
     finally {
