@@ -74,6 +74,22 @@ async function run() {
             const users = await usersCollection.find(query).toArray();
             res.send(users);
         });
+        app.get('/buyers', async (req, res) => {
+            const query = { accountType: "buyer" };
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
+        });
+        app.get('/sellers', async (req, res) => {
+            const query = { accountType: "seller" };
+            const users = await usersCollection.find(query).toArray();
+            res.send(users);
+        });
+        app.delete('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result)
+        })
 
         app.get('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -104,6 +120,16 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.json(result);
         });
+        app.put('/users/sellerStatus', verifyJWT, verifyAdmin, async (req, res) => {
+            const data = req.body;
+            const filter1 = { _id: ObjectId(data.id) };
+            const filter2 = { sellerEmail: data.email };
+            const updateDoc1 = { $set: { verify: !data.verify } };
+            const updateDoc2 = { $set: { verify: !data.verify } };
+            const result1 = await usersCollection.updateOne(filter1, updateDoc1)
+            const result2 = await productsCollection.updateMany(filter2, updateDoc2)
+            res.json(result1);
+        });
 
         // Categories section
         app.get('/categories', async (req, res) => {
@@ -121,6 +147,13 @@ async function run() {
             res.send(products);
         });
 
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(filter);
+            res.send(result)
+        })
+
         app.post('/products', async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product);
@@ -129,9 +162,9 @@ async function run() {
 
         app.put('/products', async (req, res) => {
             const data = req.body;
-            const filter = { _id: ObjectId(data.id)  };
+            const filter = { _id: ObjectId(data.id) };
             // const options = { upsert: true };
-            const updateDoc = { $set: {advertise: !data.advertiseStatus} };
+            const updateDoc = { $set: { advertise: !data.advertiseStatus } };
             const result = await productsCollection.updateOne(filter, updateDoc)
             res.json(result);
         });
